@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //PERMISSION
+        //PERMISSION checking
         int PERMISSION_ALL = 1;
         String[] PERMISSIONS = {
                 Manifest.permission.INTERNET,Manifest.permission.ACCESS_NETWORK_STATE};
