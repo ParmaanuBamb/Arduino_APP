@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 String m = output.substring(3, 5);
                 String s = output.substring(6, 8);
                 //JSON
-                JSONObject obj = null;
+                JSONObject obj = new JSONObject();
                 try {
                     obj.put("hour", h);
                     obj.put("minute", m);
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
-                postData(url, obj);
+                new SendData().execute("http://" + ipadd + "/time", obj.toString());
             }
         });
 
@@ -116,62 +116,22 @@ public class MainActivity extends AppCompatActivity {
                 //integers to json
                 n1 = int1.getText().toString();
                 n2 = int2.getText().toString();
-                JSONObject o1 = null;
+                JSONObject obj1 = new JSONObject();
                 try {
-                    o1.put("integer 1", n1);
-                    o1.put("integer 2", n2);
+                    obj1.put("start", n1);
+                    obj1.put("stop", n2);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                postData(url, o1);
+                new SendData().execute("http://" + ipadd + "/set", obj1.toString());
             }
             });
         }
 
-    public void postData(URL url, JSONObject obj) {
-        // Creating a new HttpClient and Post Header
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            conn.setRequestMethod("POST");
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        }
-        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-        conn.setRequestProperty("Accept", "application/json");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-        DataOutputStream os = null;
-        try {
-            os = new DataOutputStream(conn.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            os.writeBytes(obj.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     //permission
     public static boolean hasPermissions(Context context, String... permissions)
     {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null)
+        if (context != null && permissions != null)
         {
             for (String permission : permissions)
             {
@@ -189,10 +149,58 @@ public class MainActivity extends AppCompatActivity {
 
         ConnectivityManager cm = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert cm != null;
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         if (netInfo != null && netInfo.isConnectedOrConnecting()) {
             return true;
         }
         return false;
+    }
+}
+
+class SendData extends AsyncTask<String, Void, String> {
+
+    @Override
+    protected String doInBackground(String... params) {
+
+        String data = "";
+
+        HttpURLConnection httpURLConnection = null;
+        try {
+
+            httpURLConnection = (HttpURLConnection) new URL(params[0]).openConnection();
+            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setRequestProperty("Content-Type", "application/json; utf-8");
+            httpURLConnection.setDoOutput(true);
+
+            DataOutputStream wr = new DataOutputStream(httpURLConnection.getOutputStream());
+            wr.writeBytes(params[1]);
+            wr.flush();
+            wr.close();
+
+            InputStream in = httpURLConnection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(in);
+
+            int inputStreamData = inputStreamReader.read();
+            while (inputStreamData != -1) {
+                char current = (char) inputStreamData;
+                inputStreamData = inputStreamReader.read();
+                data += current;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (httpURLConnection != null) {
+                httpURLConnection.disconnect();
+            }
+        }
+
+        return data;
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+        super.onPostExecute(result);
+        Log.e("TAG", result); // this is expecting a response code to be sent from your server upon receiving the POST data
     }
 }
