@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AmbiControl</string>
+    <string name="name">name</string>
 </resources>
